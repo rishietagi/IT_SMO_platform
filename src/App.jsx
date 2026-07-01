@@ -1356,9 +1356,9 @@ const C={
 // Type scale — keeps sizes consistent and legible (nothing real-text below 11px).
 const T={h1:22,h2:16,h3:14,body:13,small:12,caption:11};
 
-// Reusable KPMG logo. variant="white" (knockout wordmark) for the #00338D navy surfaces; "navy" for light surfaces.
+// Reusable KPMG logo. variant="white" (knockout) for navy surfaces; "black" (outline+wordmark) for light surfaces; "navy" (legacy navy wordmark).
 function KpmgLogo({height=22,variant="navy",style}){
-  const src=variant==="white"?"/kpmg-logo-white.png":"/kpmg-logo.png";
+  const src=variant==="white"?"/kpmg-logo-white.png":variant==="black"?"/kpmg-logo-black.png":"/kpmg-logo.png";
   return <img src={src} alt="KPMG" style={{height,width:"auto",display:"block",...style}}/>;
 }
 function RAGBadge({rag}){const s=RAG_S[rag]||{bg:"#F3F4F6",txt:"#374151",dot:"#9CA3AF"};return<span style={{background:s.bg,color:s.txt,padding:"2px 9px",borderRadius:12,fontSize:11,fontWeight:700,display:"inline-flex",alignItems:"center",gap:4}}><span style={{width:6,height:6,borderRadius:"50%",background:s.dot,flexShrink:0}}/>{rag}</span>;}
@@ -2041,27 +2041,27 @@ function ExecutiveOverview({program,onSelect,onTabChange}){
         {label:"Overall TSA Exit Progress",value:`${m.totalProg}%`,sub:null,details:(()=>{const tsaInits=inits.filter(i=>i.tsa);const complete=tsaInits.filter(i=>i.prog>=100).length;const inProg=tsaInits.filter(i=>i.prog>0&&i.prog<100).length;const notStarted=tsaInits.filter(i=>i.prog===0).length;return[{l:"Target",v:`Q3 FY29`},{l:"TSA Exits Total",v:`${tsaInits.length}`},{l:"Complete",v:`${complete}`},{l:"In Progress",v:`${inProg}`},{l:"Not Started",v:`${notStarted}`}];})(),color:"#00338D",icon:"🎯"},
         {label:"IT Separation Initiatives",value:inits.length,sub:`🟢 ${inits.filter(i=>i.rag==="Green").length}  🟡 ${inits.filter(i=>i.rag==="Amber").length}  🔴 ${inits.filter(i=>i.rag==="Red").length}`,color:"#7C3AED",icon:"🗂",clickable:true},
         {label:"Financial Snapshot",value:finVar>0?"✓ Under Budget":finVar<0?"⚠ Over Budget":"✓ On Budget",valueSize:15,sub:null,details:[{l:"Total Budget",    v:`₹${m.totalBp}Cr`},{l:"Planned Till Date",v:`₹${totalPtd}Cr`},{l:"Actual Spent",    v:`₹${m.totalBs}Cr`},{l:"Variance",        v:`₹${Math.abs(finVar)}Cr ${finVar>=0?"under":"over"}`},],color:finVar>=0?"#059669":"#DC2626",icon:"💰"},
-        {label:"TSA Expiring <12M",value:m.tsaExpiring,sub:"Need immediate attention",color:m.tsaExpiring>5?"#DC2626":"#D97706",icon:"⚠"},
-        {label:"Wave 1 At Risk",value:inits.filter(i=>i.wave===1&&(i.rag==="Red"||i.rag==="Amber")).length,sub:"Need attention now",color:inits.filter(i=>i.wave===1&&i.rag==="Red").length>0?"#DC2626":"#D97706",icon:"⚡"},
+        {label:"TSA Expiring <12M",value:m.tsaExpiring,sub:null,details:(()=>{const soon=inits.filter(i=>i.tsa).sort((a,b)=>(a.tsaQ||"").localeCompare(b.tsaQ||"")).slice(0,3);return[...soon.map(i=>({l:i.name.length>22?i.name.slice(0,22)+"…":i.name,v:i.tsaQ||"—"})),{l:"Status",v:"Need immediate attention"}];})(),color:m.tsaExpiring>5?"#DC2626":"#D97706",icon:"⚠"},
+        {label:"Wave 1 At Risk",value:inits.filter(i=>i.wave===1&&(i.rag==="Red"||i.rag==="Amber")).length,sub:null,details:(()=>{const atRisk=inits.filter(i=>i.wave===1&&(i.rag==="Red"||i.rag==="Amber")).slice(0,3);return[...atRisk.map(i=>({l:i.name.length>22?i.name.slice(0,22)+"…":i.name,v:i.rag})),{l:"Status",v:"Need attention now"}];})(),color:inits.filter(i=>i.wave===1&&i.rag==="Red").length>0?"#DC2626":"#D97706",icon:"⚡"},
       ].map((k,i)=><div key={i} onClick={k.clickable&&onTabChange?()=>onTabChange("initiatives"):undefined}
-        style={{background:"white",borderRadius:10,padding:"14px 16px",boxShadow:"0 1px 4px rgba(0,0,0,0.06)",borderTop:`3px solid ${k.color}`,cursor:k.clickable?"pointer":"default",transition:"box-shadow 0.15s"}}
-        onMouseEnter={e=>k.clickable&&(e.currentTarget.style.boxShadow="0 4px 12px rgba(0,0,0,0.12)")}
-        onMouseLeave={e=>k.clickable&&(e.currentTarget.style.boxShadow="0 1px 4px rgba(0,0,0,0.06)")}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
-          <p style={{fontSize:10,color:"#9CA3AF",fontWeight:700,textTransform:"uppercase",letterSpacing:0.3,lineHeight:1.3}}>{k.label}</p>
-          <span style={{fontSize:18}}>{k.icon}</span>
+        style={{background:"white",borderRadius:10,padding:"16px",boxShadow:"0 1px 3px rgba(0,0,0,0.05)",border:"1px solid #EEF0F3",borderTop:`3px solid ${k.color}`,cursor:k.clickable?"pointer":"default",transition:"box-shadow 0.15s",display:"flex",flexDirection:"column"}}
+        onMouseEnter={e=>k.clickable&&(e.currentTarget.style.boxShadow="0 4px 14px rgba(0,0,0,0.1)")}
+        onMouseLeave={e=>k.clickable&&(e.currentTarget.style.boxShadow="0 1px 3px rgba(0,0,0,0.05)")}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+          <p style={{fontSize:11,color:"#6B7280",fontWeight:700,textTransform:"uppercase",letterSpacing:0.4,lineHeight:1.3}}>{k.label}</p>
+          <span style={{fontSize:16,opacity:0.7}}>{k.icon}</span>
         </div>
-        <p style={{fontSize:k.valueSize||24,fontWeight:800,color:k.color,lineHeight:1,marginBottom:k.details?8:4}}>{k.value}</p>
+        <p style={{fontSize:k.valueSize||26,fontWeight:800,color:k.color,lineHeight:1,marginBottom:k.details?10:6}}>{k.value}</p>
         {k.details
-          ?<div style={{display:"flex",flexDirection:"column",gap:0}}>
+          ?<div style={{display:"flex",flexDirection:"column",gap:0,marginTop:"auto"}}>
             {k.details.map(({l,v},di)=>(
-              <div key={di} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"3px 0",borderTop:"1px solid #F3F4F6"}}>
-                <span style={{fontSize:10,color:"#9CA3AF"}}>{l}</span>
-                <span style={{fontSize:10,fontWeight:700,color:di===3?k.color:"#374151"}}>{v}</span>
+              <div key={di} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 0",borderTop:"1px solid #F3F4F6"}}>
+                <span style={{fontSize:11,color:"#9CA3AF"}}>{l}</span>
+                <span style={{fontSize:11,fontWeight:700,color:di===3?k.color:"#374151"}}>{v}</span>
               </div>))}
           </div>
-          :<p style={{fontSize:10,color:"#9CA3AF"}}>{k.sub}</p>}
-        {k.clickable&&<p style={{fontSize:9,color:k.color,fontWeight:600,marginTop:4}}>Click to view all →</p>}
+          :<p style={{fontSize:11,color:"#9CA3AF",marginTop:"auto"}}>{k.sub}</p>}
+        {k.clickable&&<p style={{fontSize:10,color:k.color,fontWeight:600,marginTop:8}}>Click to view all →</p>}
       </div>)}
     </div>
 
@@ -3030,34 +3030,54 @@ function MainPlatform({program,onHome,role,setRole}){
 // ─── LANDING PAGE ─────────────────────────────
 function LandingPage({onSample,onSetup}){
   const [h1,setH1]=useState(false);const [h2,setH2]=useState(false);
-  return<div style={{minHeight:"100vh",background:"linear-gradient(135deg, #00338D 0%, #001F5A 100%)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"Arial, sans-serif"}}>
-    <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:40}}>
-      <KpmgLogo height={30} variant="white"/>
-      <div style={{width:1,height:36,background:"rgba(255,255,255,0.2)"}}/>
-      <p style={{color:"rgba(255,255,255,0.7)",fontSize:13,fontWeight:500}}>IT Separation Management Office</p>
+  const cards=[
+    {key:"setup",onClick:onSetup,hovered:h1,setHover:setH1,accent:"#00338D",tint:"#EEF3FB",icon:"🆕",
+      title:"Setup New SMO Program",
+      desc:"Configure your separation programme with guiding principles, initiative roadmap, and TSA structure. AI-assisted where you need it.",
+      tags:["Guided wizard","AI-assisted","5 steps"],cta:"Start setup"},
+    {key:"sample",onClick:onSample,hovered:h2,setHover:setH2,accent:"#0284C7",tint:"#EFF6FF",icon:"📊",
+      title:"Sample SMO Program",
+      desc:"ClientCo separating from Global Corp — full executive command centre, 25 initiatives, ARB framework, roadmap, risks, and all artifacts pre-loaded.",
+      tags:["Executive dashboard","25 initiatives","ARB live","All artifacts","AI insights"],cta:"Explore sample"},
+  ];
+  return<div style={{minHeight:"100vh",background:"linear-gradient(180deg, #FFFFFF 0%, #F4F7FB 100%)",fontFamily:"Arial, sans-serif",display:"flex",flexDirection:"column"}}>
+    {/* Top brand bar */}
+    <div style={{display:"flex",alignItems:"center",gap:14,padding:"20px 40px",borderBottom:"1px solid #E9EDF3"}}>
+      <KpmgLogo height={30} variant="black"/>
+      <div style={{width:1,height:26,background:"#D5DCE6"}}/>
+      <p style={{color:"#6B7280",fontSize:13,fontWeight:600}}>IT Separation Management Office</p>
     </div>
-    <div style={{textAlign:"center",maxWidth:640,marginBottom:52}}>
-      <h1 style={{color:"white",fontSize:28,fontWeight:800,lineHeight:1.3,marginBottom:14}}>Welcome to KPMG IT SMO Suite</h1>
-      <p style={{color:"#93C5FD",fontSize:15,lineHeight:1.6}}>Managing your end-to-end IT transformation — from separation strategy through to standalone operation</p>
-      <div style={{display:"flex",justifyContent:"center",gap:8,marginTop:16,flexWrap:"wrap"}}>
-        {["Executive Command Centre","25 Initiatives","ARB Framework","AI-Powered","All Artifacts Pre-Loaded"].map(t=><span key={t} style={{background:"rgba(255,255,255,0.12)",color:"rgba(255,255,255,0.8)",fontSize:11,padding:"3px 10px",borderRadius:20}}>{t}</span>)}
+
+    {/* Hero + cards */}
+    <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"48px 24px"}}>
+      <div style={{textAlign:"center",maxWidth:660,marginBottom:44}}>
+        <span style={{display:"inline-block",background:"#EEF3FB",color:"#00338D",fontSize:12,fontWeight:700,letterSpacing:0.3,padding:"5px 14px",borderRadius:20,marginBottom:18}}>KPMG IT Separation Management Office</span>
+        <h1 style={{color:"#0F1D3D",fontSize:38,fontWeight:800,lineHeight:1.2,marginBottom:16,letterSpacing:-0.5}}>Welcome to the <span style={{color:"#00338D"}}>KPMG IT SMO Suite</span></h1>
+        <p style={{color:"#4B5563",fontSize:16,lineHeight:1.6,maxWidth:560,margin:"0 auto"}}>Managing your end-to-end IT transformation — from separation strategy through to standalone operation.</p>
+        <div style={{display:"flex",justifyContent:"center",gap:8,marginTop:22,flexWrap:"wrap"}}>
+          {["Executive Command Centre","25 Initiatives","ARB Framework","AI-Powered","All Artifacts Pre-Loaded"].map(t=><span key={t} style={{background:"white",border:"1px solid #E5E9F0",color:"#475569",fontSize:11,fontWeight:600,padding:"5px 12px",borderRadius:20,boxShadow:"0 1px 2px rgba(15,29,61,0.04)"}}>{t}</span>)}
+        </div>
+      </div>
+
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))",gap:24,width:"100%",maxWidth:720}}>
+        {cards.map(c=>(
+          <div key={c.key} onClick={c.onClick} onMouseEnter={()=>c.setHover(true)} onMouseLeave={()=>c.setHover(false)}
+            style={{background:"white",borderRadius:16,padding:"30px 28px",cursor:"pointer",border:"1px solid #E9EDF3",borderTop:`4px solid ${c.accent}`,
+              boxShadow:c.hovered?"0 16px 40px rgba(15,29,61,0.14)":"0 2px 10px rgba(15,29,61,0.06)",
+              transform:c.hovered?"translateY(-5px)":"none",transition:"all 0.2s",display:"flex",flexDirection:"column"}}>
+            <div style={{width:52,height:52,background:c.tint,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:18,fontSize:24}}>{c.icon}</div>
+            <h2 style={{fontSize:19,fontWeight:800,color:"#0F1D3D",marginBottom:10}}>{c.title}</h2>
+            <p style={{fontSize:13,color:"#6B7280",lineHeight:1.6,marginBottom:18}}>{c.desc}</p>
+            <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:22}}>{c.tags.map(t=><span key={t} style={{background:c.tint,color:c.accent,fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:8}}>{t}</span>)}</div>
+            <div style={{marginTop:"auto",display:"flex",alignItems:"center",gap:8,color:c.accent,fontSize:14,fontWeight:700}}>
+              {c.cta}<span style={{transition:"transform 0.2s",transform:c.hovered?"translateX(4px)":"none"}}>→</span>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
-    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(270px,1fr))",gap:20,width:"100%",maxWidth:620}}>
-      <div onClick={onSetup} onMouseEnter={()=>setH1(true)} onMouseLeave={()=>setH1(false)} style={{background:"white",borderRadius:14,padding:"28px 24px",cursor:"pointer",boxShadow:h1?"0 12px 40px rgba(0,0,0,0.3)":"0 4px 20px rgba(0,0,0,0.15)",transform:h1?"translateY(-4px)":"none",transition:"all 0.2s",borderTop:"4px solid #83BD41"}}>
-        <div style={{width:44,height:44,background:"#F0FDF4",borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:14,fontSize:22}}>🆕</div>
-        <h2 style={{fontSize:15,fontWeight:800,color:"#00338D",marginBottom:8}}>Setup New SMO Program</h2>
-        <p style={{fontSize:12,color:"#6B7280",lineHeight:1.6,marginBottom:16}}>Configure your separation programme with guiding principles, initiative roadmap, and TSA structure. AI-assisted where you need it.</p>
-        <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>{["Guided wizard","AI-assisted","5 steps"].map(t=><span key={t} style={{background:"#F0F9FF",color:"#0284C7",fontSize:10,fontWeight:600,padding:"2px 8px",borderRadius:8}}>{t}</span>)}</div>
-      </div>
-      <div onClick={onSample} onMouseEnter={()=>setH2(true)} onMouseLeave={()=>setH2(false)} style={{background:"white",borderRadius:14,padding:"28px 24px",cursor:"pointer",boxShadow:h2?"0 12px 40px rgba(0,0,0,0.3)":"0 4px 20px rgba(0,0,0,0.15)",transform:h2?"translateY(-4px)":"none",transition:"all 0.2s",borderTop:"4px solid #0284C7"}}>
-        <div style={{width:44,height:44,background:"#EFF6FF",borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:14,fontSize:22}}>📊</div>
-        <h2 style={{fontSize:15,fontWeight:800,color:"#00338D",marginBottom:8}}>Sample SMO Program</h2>
-        <p style={{fontSize:12,color:"#6B7280",lineHeight:1.6,marginBottom:16}}>ClientCo separating from Global Corp — full executive command centre, 25 initiatives, ARB framework, roadmap, risks, and all artifacts pre-loaded.</p>
-        <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>{["Executive dashboard","25 initiatives","ARB live","All artifacts","AI insights"].map(t=><span key={t} style={{background:"#F0FDF4",color:"#059669",fontSize:10,fontWeight:600,padding:"2px 8px",borderRadius:8}}>{t}</span>)}</div>
-      </div>
-    </div>
-    <p style={{color:"rgba(255,255,255,0.3)",fontSize:11,marginTop:40}}>KPMG India · Digital Transformation Practice · Confidential</p>
+
+    <p style={{color:"#9CA3AF",fontSize:11,textAlign:"center",padding:"0 24px 28px"}}>KPMG India · Digital Transformation Practice · Confidential</p>
   </div>;}
 
 // ─── SETUP WIZARD ─────────────────────────────
@@ -3071,7 +3091,7 @@ function SetupWizard({onComplete,onBack}){
   const STEPS=[{n:1,l:"Overview"},{n:2,l:"Principles"},{n:3,l:"Initiatives"},{n:4,l:"TSA"},{n:5,l:"Launch"}];
   return<div style={{minHeight:"100vh",background:"#F4F7FB",fontFamily:"Arial, sans-serif"}}>
     <div style={{background:"#00338D",padding:"12px 20px",display:"flex",alignItems:"center",gap:12}}>
-      <KpmgLogo height={20} pill/>
+      <KpmgLogo height={18} variant="white"/>
       <p style={{color:"white",fontWeight:700,fontSize:13}}>Setup New SMO Program</p>
       <p style={{color:"#93C5FD",fontSize:11,marginLeft:4}}>Step {step} of {TOTAL}</p>
       <button onClick={onBack} style={{marginLeft:"auto",background:"rgba(255,255,255,0.15)",border:"none",color:"white",padding:"5px 12px",borderRadius:16,fontSize:11,cursor:"pointer"}}>← Home</button>
