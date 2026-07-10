@@ -49,6 +49,10 @@ export function PhaseFolder({
                   <span className="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
                     <CheckCircle2 className="h-3 w-3" /> Saved
                   </span>
+                ) : status === "draft" ? (
+                  <span className="inline-flex items-center gap-1 rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                    <FileText className="h-3 w-3" /> Draft
+                  </span>
                 ) : (
                   <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
                     <Sparkles className="h-3 w-3" /> Generate

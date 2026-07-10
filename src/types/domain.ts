@@ -135,6 +135,11 @@ export interface Program {
 
 // ─── Derived / computed shapes ───
 
+export interface TopRisk {
+  txt: string;
+  sev: "Critical" | "High" | "Medium";
+}
+
 export interface PortfolioMetrics {
   totalProg: number;
   red: Initiative[];
@@ -147,7 +152,7 @@ export interface PortfolioMetrics {
   budgetGap: number;
   aiScore: number;
   tsaExpiring: number;
-  topRisks: Risk[];
+  topRisks: TopRisk[];
   catProgress: Record<string, number>;
   tsBuckets: Record<string, Initiative[]>;
 }

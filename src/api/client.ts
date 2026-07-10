@@ -5,6 +5,7 @@
 import type { Program } from "@/types/domain";
 import { INITIATIVES } from "@/data/initiatives";
 import { SAMPLE_PRINCIPLES } from "@/data/catalog";
+import { SAMPLE_CONTENT } from "@/data/sampleContent";
 import { nowStamp } from "@/lib/format";
 
 export const SAMPLE_PROGRAM: Program = {
@@ -70,10 +71,25 @@ export function saveArtifact(
   return rec;
 }
 
+/** Pre-drafted content shipped with certain initiatives (no localStorage save). */
+export function presetContent(initId: number, artifactName: string): string | null {
+  return SAMPLE_CONTENT[initId]?.[artifactName] ?? null;
+}
+
+/**
+ * Content to show in the artifact viewer: a user's saved version wins, otherwise
+ * fall back to any pre-loaded draft. Returns null if neither exists (→ Generate).
+ */
+export function artifactContent(initId: number, artifactName: string): string | null {
+  return loadArtifact(initId, artifactName)?.content ?? presetContent(initId, artifactName);
+}
+
 /** Status of an artifact for folder badges. */
 export function artifactStatus(
   initId: number,
   artifactName: string
 ): "saved" | "draft" | "idle" {
-  return loadArtifact(initId, artifactName) ? "saved" : "idle";
+  if (loadArtifact(initId, artifactName)) return "saved";
+  if (presetContent(initId, artifactName)) return "draft";
+  return "idle";
 }

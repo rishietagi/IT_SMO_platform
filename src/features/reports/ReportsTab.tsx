@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Markdown } from "@/components/brand/Markdown";
 import { RagBadge } from "@/components/brand/RagBadge";
 import { useInitiatives } from "@/store/program";
-import { loadArtifact, saveArtifact } from "@/api/client";
+import { loadArtifact, saveArtifact, artifactContent, artifactStatus } from "@/api/client";
 import { CATS } from "@/data/catalog";
 import type { Initiative } from "@/types/domain";
 
@@ -25,7 +25,7 @@ export function ReportsTab() {
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {inits.map((i) => {
-          const has = !!loadArtifact(i.id, WSR);
+          const has = artifactStatus(i.id, WSR) !== "idle";
           return (
             <Card
               key={i.id}
@@ -56,8 +56,9 @@ export function ReportsTab() {
 
 function ReportDetail({ init, onBack }: { init: Initiative; onBack: () => void }) {
   const existing = loadArtifact(init.id, WSR);
-  const [content, setContent] = useState(existing?.content ?? "");
-  const [editing, setEditing] = useState(!existing);
+  const initial = artifactContent(init.id, WSR);
+  const [content, setContent] = useState(initial ?? "");
+  const [editing, setEditing] = useState(!initial);
   const [sent, setSent] = useState(false);
 
   const save = () => {

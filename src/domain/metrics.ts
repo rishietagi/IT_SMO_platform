@@ -60,20 +60,20 @@ export function computeMetrics(inits: Initiative[]): PortfolioMetrics {
     (i) => i.tsaQ && ["Q3 FY27", "Q4 FY27", "Q1 FY28"].includes(i.tsaQ)
   ).length;
 
-  const topRisks = [
+  const topRisks: PortfolioMetrics["topRisks"] = [
     ...red.map((i) => ({
       txt: `${i.name} — ${i.rag} RAG on critical path`,
-      sev: "Critical",
+      sev: "Critical" as const,
     })),
     ...criticalTsa.map((i) => ({
       txt: `${i.name} — TSA exit ${i.tsaQ} at risk`,
-      sev: "High",
+      sev: "High" as const,
     })),
     ...wave1Behind
       .filter((i) => i.rag !== "Red")
       .slice(0, 2)
-      .map((i) => ({ txt: `${i.name} — Wave 1 behind plan`, sev: "Medium" })),
-  ].slice(0, 5) as unknown as PortfolioMetrics["topRisks"];
+      .map((i) => ({ txt: `${i.name} — Wave 1 behind plan`, sev: "Medium" as const })),
+  ].slice(0, 5);
 
   const catProgress: Record<string, number> = {};
   CATEGORY_NAMES.forEach((cat) => {

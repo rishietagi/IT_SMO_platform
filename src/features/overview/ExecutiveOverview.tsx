@@ -13,6 +13,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { StatCard, type StatDetail } from "@/components/brand/StatCard";
+import { RagBadge } from "@/components/brand/RagBadge";
 import { Donut } from "@/components/charts/Donut";
 import { useProgram, useInitiatives } from "@/store/program";
 import { computeMetrics } from "@/domain/metrics";
@@ -127,7 +128,112 @@ export function ExecutiveOverview() {
           <TowerProgress catProgress={m.catProgress} />
         </div>
       </div>
+
+      {/* Bottom row: top risks + AI recommendations + live budget */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <TopRisks risks={m.topRisks} />
+        <AiRecommendations m={m} />
+        <LiveBudget />
+      </div>
     </div>
+  );
+}
+
+function TopRisks({ risks }: { risks: { txt: string; sev: string }[] }) {
+  const sev = (s: string) =>
+    s === "Critical" ? "bg-red-100 text-red-700" : s === "High" ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700";
+  const navigate = useNavigate();
+  return (
+    <Card className="flex flex-col p-4">
+      <div className="mb-2.5 flex items-center justify-between">
+        <p className="text-sm font-bold text-foreground">Top Risks</p>
+        <span className="text-[10px] text-muted-foreground">Computed from initiative data</span>
+      </div>
+      {risks.length === 0 ? (
+        <p className="text-xs text-muted-foreground">No critical risks identified</p>
+      ) : (
+        <div className="space-y-2">
+          {risks.map((r, i) => (
+            <div key={i} className="flex items-start gap-2">
+              <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-[9px] font-bold ${sev(r.sev)}`}>{r.sev}</span>
+              <p className="text-[11px] leading-snug text-foreground">{r.txt}</p>
+            </div>
+          ))}
+        </div>
+      )}
+      <button
+        onClick={() => navigate("/app/risks")}
+        className="mt-3 self-start text-[11px] font-semibold text-sky-600 hover:underline"
+      >
+        View All Risks →
+      </button>
+    </Card>
+  );
+}
+
+function AiRecommendations({ m }: { m: ReturnType<typeof computeMetrics> }) {
+  const items = [
+    { icon: "🔴", txt: `${m.criticalTsa.length} critical TSA exits in Wave 1. Prioritise transition plans and resourcing immediately.`, level: "High" },
+    { icon: "🟡", txt: `Data migration activities at risk due to Global Corp system dependency — early assessment critical.`, level: "Medium" },
+    { icon: "🟢", txt: `Cloud Foundation at ${m.catProgress["Infra & Cyber"] || 0}% — ahead of other towers. Good base for cloud workstreams.`, level: "Info" },
+  ];
+  const badge = (l: string) =>
+    l === "High" ? "bg-red-100 text-red-700" : l === "Medium" ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700";
+  return (
+    <Card className="p-4">
+      <p className="mb-2.5 text-sm font-bold text-foreground">AI Insights &amp; Recommendations</p>
+      <div className="space-y-2">
+        {items.map((ins, i) => (
+          <div key={i} className="flex items-start gap-2.5 rounded-lg bg-slate-50 p-2.5">
+            <span className="shrink-0 text-base">{ins.icon}</span>
+            <p className="flex-1 text-[11px] leading-relaxed text-foreground">{ins.txt}</p>
+            <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-[9px] font-bold ${badge(ins.level)}`}>{ins.level}</span>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+function LiveBudget() {
+  const navigate = useNavigate();
+  const inits = useInitiatives();
+  const top5 = [...inits].sort((a, b) => b.bp - a.bp).slice(0, 5);
+  return (
+    <Card className="p-4">
+      <div className="mb-2.5 flex items-center justify-between">
+        <p className="text-sm font-bold text-foreground">Live Budget — Top 5 Initiatives</p>
+        <span className="text-[10px] text-muted-foreground">by planned spend</span>
+      </div>
+      <div className="space-y-2.5">
+        {top5.map((init) => {
+          const ptd = Math.round((init.bp * init.prog) / 100);
+          const variance = ptd - init.bs;
+          const ragColor = init.rag === "Red" ? "#DC2626" : init.rag === "Amber" ? "#D97706" : "#059669";
+          return (
+            <button
+              key={init.id}
+              onClick={() => navigate(`/app/initiatives/${init.id}`)}
+              className="block w-full border-b border-border/60 pb-2 text-left last:border-0"
+            >
+              <div className="mb-1 flex items-center justify-between gap-2">
+                <span className="text-[11px] font-bold leading-tight text-foreground">{init.name}</span>
+                <RagBadge rag={init.rag} className="shrink-0" />
+              </div>
+              <div className="mb-1 flex items-center justify-between text-[10px] text-muted-foreground">
+                <span>{cr(init.bp)} · Spent {cr(init.bs)}</span>
+                <span className="font-semibold" style={{ color: variance >= 0 ? "#059669" : "#DC2626" }}>
+                  {cr(Math.abs(variance))} {variance >= 0 ? "under" : "over"}
+                </span>
+              </div>
+              <div className="h-1 rounded bg-slate-200">
+                <div className="h-full rounded" style={{ width: `${Math.min((init.bs / init.bp) * 100, 100)}%`, background: ragColor }} />
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </Card>
   );
 }
 

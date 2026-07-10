@@ -206,7 +206,7 @@ export function InitiativeDetail() {
         </TabsContent>
       </Tabs>
 
-      <ArtifactDialog init={init} artifact={artifact} open={dlgOpen} onOpenChange={setDlgOpen} />
+      <ArtifactDialog key={artifact?.name ?? "none"} init={init} artifact={artifact} open={dlgOpen} onOpenChange={setDlgOpen} />
     </div>
   );
 }

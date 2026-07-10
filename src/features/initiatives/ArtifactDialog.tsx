@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Markdown } from "@/components/brand/Markdown";
-import { loadArtifact, saveArtifact, type ArtifactRecord } from "@/api/client";
+import { loadArtifact, saveArtifact, artifactContent } from "@/api/client";
 import { generateArtifact } from "@/api/ai";
 import { buildArtifactPrompt } from "@/domain/aiPrompts";
 import { useProgram } from "@/store/program";
@@ -28,10 +28,12 @@ export function ArtifactDialog({
   onOpenChange: (v: boolean) => void;
 }) {
   const { program } = useProgram();
-  const existing: ArtifactRecord | null = artifact ? loadArtifact(init.id, artifact.name) : null;
-  const [mode, setMode] = useState<Mode>(existing ? "view" : "idle");
-  const [content, setContent] = useState(existing?.content ?? "");
-  const [savedAt, setSavedAt] = useState(existing?.ts ?? "");
+  const saved = artifact ? loadArtifact(init.id, artifact.name) : null;
+  // Saved version wins; otherwise show any pre-loaded draft content.
+  const initialContent = artifact ? artifactContent(init.id, artifact.name) : null;
+  const [mode, setMode] = useState<Mode>(initialContent ? "view" : "idle");
+  const [content, setContent] = useState(initialContent ?? "");
+  const [savedAt, setSavedAt] = useState(saved?.ts ?? "");
   const [draft, setDraft] = useState("");
   const [direction, setDirection] = useState("");
 
