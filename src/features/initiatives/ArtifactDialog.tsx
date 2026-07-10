@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Sparkles, Pencil, Save, RotateCcw, Copy, X } from "lucide-react";
+import { Sparkles, Pencil, Save, RotateCcw, Copy, X, GitBranch } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -8,10 +8,12 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Markdown } from "@/components/brand/Markdown";
+import { CriticalPathPanel } from "./CriticalPathPanel";
 import { loadArtifact, saveArtifact, artifactContent } from "@/api/client";
 import { generateArtifact } from "@/api/ai";
 import { buildArtifactPrompt } from "@/domain/aiPrompts";
 import { useProgram } from "@/store/program";
+import { cn } from "@/lib/utils";
 import type { Initiative, Artifact } from "@/types/domain";
 
 type Mode = "idle" | "loading" | "view" | "editing";
@@ -36,8 +38,11 @@ export function ArtifactDialog({
   const [savedAt, setSavedAt] = useState(saved?.ts ?? "");
   const [draft, setDraft] = useState("");
   const [direction, setDirection] = useState("");
+  const [showCriticalPath, setShowCriticalPath] = useState(false);
 
   if (!artifact) return null;
+
+  const isProjectPlan = artifact.name === "Detailed Project Plan";
 
   const generate = async () => {
     setMode("loading");
@@ -64,6 +69,20 @@ export function ArtifactDialog({
               {savedAt ? `💾 Saved · ${savedAt}` : mode === "editing" ? "✏️ Editing" : mode === "view" ? "📄 Draft ready" : "⚡ Generate"}
             </p>
           </div>
+          {mode === "view" && isProjectPlan && (
+            <Button
+              size="sm"
+              onClick={() => setShowCriticalPath((v) => !v)}
+              className={cn(
+                "gap-1.5 border",
+                showCriticalPath
+                  ? "border-red-500 bg-red-600 text-white hover:bg-red-600"
+                  : "border-red-400/40 bg-red-500/15 text-red-200 hover:bg-red-500/25"
+              )}
+            >
+              <GitBranch className="h-3.5 w-3.5" /> Critical Path
+            </Button>
+          )}
           {mode === "view" && (
             <Button
               size="sm"
@@ -122,6 +141,7 @@ export function ArtifactDialog({
           )}
           {mode === "view" && (
             <div>
+              {isProjectPlan && showCriticalPath && <CriticalPathPanel />}
               <Markdown>{content}</Markdown>
               <div className="mt-4 flex gap-2 border-t pt-3">
                 <Button size="sm" variant="outline" className="gap-1.5" onClick={generate}>

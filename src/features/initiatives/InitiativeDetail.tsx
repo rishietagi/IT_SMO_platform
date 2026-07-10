@@ -16,7 +16,7 @@ import { PHASE_META, PHASES, CATS } from "@/data/catalog";
 import { initiativeNarrative } from "@/api/ai";
 import { cr } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { Artifact } from "@/types/domain";
+import type { Artifact, Initiative } from "@/types/domain";
 
 export function InitiativeDetail() {
   const { id } = useParams();
@@ -193,6 +193,13 @@ export function InitiativeDetail() {
               </div>
             </div>
           </div>
+
+          {/* Top Risks + Top Issues + Stakeholders */}
+          <div className="grid gap-4 lg:grid-cols-[1fr_1fr_1fr]">
+            <TopRisksCard init={init} />
+            <TopIssuesCard init={init} />
+            <StakeholdersCard init={init} phaseIdx={phaseIdx} milestones={milestones} />
+          </div>
         </TabsContent>
 
         <TabsContent value="artifacts" className="space-y-2.5">
@@ -208,5 +215,96 @@ export function InitiativeDetail() {
 
       <ArtifactDialog key={artifact?.name ?? "none"} init={init} artifact={artifact} open={dlgOpen} onOpenChange={setDlgOpen} />
     </div>
+  );
+}
+
+function TopRisksCard({ init }: { init: Initiative }) {
+  const rows = [
+    { d: `${init.cat} data migration complexity`, impact: "High", score: init.rag === "Red" ? 20 : 15, trend: "↑" },
+    { d: "Resource availability — business SMEs", impact: "High", score: 12, trend: "↑" },
+    { d: `${init.tsa ? "TSA exit timeline" : "Integration dependency"} risk`, impact: init.tsa ? "Critical" : "Medium", score: init.tsa ? 18 : 9, trend: "→" },
+    { d: "Vendor delivery quality", impact: "Medium", score: 8, trend: "→" },
+  ];
+  const navigate = useNavigate();
+  return (
+    <Card className="p-4">
+      <div className="mb-2 flex items-center justify-between">
+        <h4 className="text-xs font-extrabold text-foreground">Top Risks</h4>
+        <button onClick={() => navigate("/app/risks")} className="text-[11px] font-bold text-kpmg-navy hover:underline">View All</button>
+      </div>
+      <div className="grid grid-cols-[1fr_46px_40px_20px] border-b border-border/60 pb-1 text-[10px] font-bold text-muted-foreground">
+        <span>Risk</span><span>Impact</span><span className="text-center">Score</span><span />
+      </div>
+      {rows.map((r, i) => {
+        const sc = r.score >= 18 ? "#DC2626" : r.score >= 12 ? "#D97706" : "#CA8A04";
+        return (
+          <div key={i} className="grid grid-cols-[1fr_46px_40px_20px] items-center border-t border-slate-50 py-1.5 text-[11px]">
+            <span className="pr-1 leading-tight text-foreground">{r.d}</span>
+            <span className="text-[10px] font-semibold" style={{ color: r.impact === "Critical" || r.impact === "High" ? "#DC2626" : "#D97706" }}>{r.impact}</span>
+            <span className="mx-auto rounded-md px-1.5 text-[10px] font-extrabold text-white" style={{ background: sc }}>{r.score}</span>
+            <span className="text-center font-bold" style={{ color: r.trend === "↑" ? "#DC2626" : "#9CA3AF" }}>{r.trend}</span>
+          </div>
+        );
+      })}
+    </Card>
+  );
+}
+
+function TopIssuesCard({ init }: { init: Initiative }) {
+  const rows = [
+    { d: "Global Corp KT documentation incomplete", sev: "High", status: "Open" },
+    { d: "Business SME availability below 30%", sev: "High", status: "In Progress" },
+    { d: `Vendor PD at 60% vs 80% required`, sev: "Medium", status: "In Progress" },
+    { d: "Integration scope not fully defined", sev: "Medium", status: "Open" },
+  ];
+  void init;
+  return (
+    <Card className="p-4">
+      <div className="mb-2 flex items-center justify-between">
+        <h4 className="text-xs font-extrabold text-foreground">Top Issues</h4>
+        <span className="text-[11px] font-bold text-kpmg-navy">View All</span>
+      </div>
+      <div className="grid grid-cols-[1fr_42px_66px] border-b border-border/60 pb-1 text-[10px] font-bold text-muted-foreground">
+        <span>Issue</span><span>Severity</span><span>Status</span>
+      </div>
+      {rows.map((iss, i) => (
+        <div key={i} className="grid grid-cols-[1fr_42px_66px] items-center border-t border-slate-50 py-1.5 text-[11px]">
+          <span className="pr-1 leading-tight text-foreground">{iss.d}</span>
+          <span className="text-[10px] font-semibold" style={{ color: iss.sev === "High" ? "#DC2626" : "#D97706" }}>{iss.sev}</span>
+          <span className={cn("w-fit rounded-md px-1.5 py-0.5 text-[10px] font-bold", iss.status === "In Progress" ? "bg-blue-100 text-blue-700" : "bg-slate-100 text-slate-500")}>{iss.status}</span>
+        </div>
+      ))}
+    </Card>
+  );
+}
+
+function StakeholdersCard({
+  init,
+  phaseIdx,
+  milestones,
+}: {
+  init: Initiative;
+  phaseIdx: number;
+  milestones: { l: string; status: string }[];
+}) {
+  const items = [
+    { icon: "📅", label: "Next Steering Committee", detail: `Agenda: ${PHASE_META[phaseIdx].short} progress, risks, budget forecast`, sub: "Monthly cadence" },
+    { icon: "📄", label: "Upcoming Deliverable", detail: `${milestones.find((m) => m.status === "active")?.l || "Phase milestone"} due`, sub: `Target: ${init.goLive}` },
+    { icon: "💬", label: "Recent Update", detail: `${init.desc.substring(0, 60)}…`, sub: "From SMO weekly update" },
+  ];
+  return (
+    <Card className="p-4">
+      <h4 className="mb-2 text-xs font-extrabold text-foreground">Stakeholders &amp; Communication</h4>
+      {items.map((s, i) => (
+        <div key={i} className="flex gap-2.5 border-b border-slate-50 py-2 last:border-0">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-sm">{s.icon}</div>
+          <div>
+            <p className="text-[11px] font-bold text-foreground">{s.label}</p>
+            <p className="text-[10px] leading-tight text-muted-foreground">{s.detail}</p>
+            <p className="mt-0.5 text-[10px] font-semibold text-kpmg-navy">{s.sub}</p>
+          </div>
+        </div>
+      ))}
+    </Card>
   );
 }
